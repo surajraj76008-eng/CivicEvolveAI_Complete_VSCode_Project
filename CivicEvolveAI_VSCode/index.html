@@ -1,0 +1,1807 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CivicEvolve AI | Emergency Reporting</title>
+
+    <!-- Leaflet Map CSS -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
+
+    <!-- Leaflet Map JavaScript -->
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+    </script>
+
+    <style>
+
+        /* General Styling */
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        header {
+            background: #0f172a;
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 30px;
+        }
+
+        header p {
+            margin-top: 8px;
+            color: #cbd5e1;
+        }
+
+        nav {
+            background: #1e293b;
+            padding: 15px;
+            text-align: center;
+        }
+
+        nav button {
+            padding: 12px 22px;
+            margin: 5px;
+            border: none;
+            border-radius: 6px;
+            background: #38bdf8;
+            color: #0f172a;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        nav button:hover {
+            background: #7dd3fc;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+            padding: 25px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: #0f172a;
+        }
+
+        h3 {
+            margin-bottom: 12px;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+        }
+
+        input[type="file"] {
+            background: #f8fafc;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        .submit-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 13px;
+            border-radius: 6px;
+            width: 100%;
+            font-size: 16px;
+            margin-top: 15px;
+        }
+
+        .submit-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .location-btn {
+            background: #059669;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #map,
+        #adminMap {
+            height: 350px;
+            width: 100%;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .report {
+            border: 1px solid #e2e8f0;
+            padding: 18px;
+            margin: 15px 0;
+            border-radius: 10px;
+        }
+
+        .admin-report-columns {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+            align-items: start;
+        }
+
+        .admin-report-column {
+            border: 1px solid #dbe3ed;
+            border-radius: 12px;
+            padding: 16px;
+            min-width: 0;
+            background: #fff;
+        }
+
+        .admin-report-column.emergency-column {
+            border-top: 5px solid #dc2626;
+            background: #fffafa;
+        }
+
+        .admin-report-column.civic-column {
+            border-top: 5px solid #2563eb;
+            background: #f8fbff;
+        }
+
+        .admin-report-column h3 { margin-top: 0; }
+        .urgent-badge {
+            display: inline-block;
+            background: #dc2626;
+            color: white;
+            padding: 5px 9px;
+            border-radius: 6px;
+            font-weight: 800;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 760px) {
+            .admin-report-columns { grid-template-columns: 1fr; }
+        }
+
+        .report img {
+            width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            margin: 15px 0;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+
+        .status {
+            color: #2563eb;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .stat-box {
+            background: #eff6ff;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-box h3 {
+            color: #2563eb;
+            font-size: 28px;
+        }
+
+        footer {
+            background: #0f172a;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        @media(max-width: 600px) {
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 12px;
+            }
+
+        }
+
+
+        /* Camera capture and preview */
+        .camera-box {
+            margin: 15px 0;
+            padding: 16px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            background: #f8fafc;
+        }
+
+        #cameraPreview {
+            display: none;
+            width: 100%;
+            max-height: 360px;
+            object-fit: cover;
+            background: #0f172a;
+            border-radius: 10px;
+            margin: 12px 0;
+        }
+
+        #capturedPreview {
+            display: none;
+            width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            border-radius: 10px;
+            margin: 12px 0;
+            background: #e2e8f0;
+        }
+
+        .camera-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .camera-actions button {
+            border: 0;
+            border-radius: 7px;
+            padding: 10px 14px;
+            color: white;
+            background: #0f766e;
+        }
+
+        .camera-actions button.stop-camera {
+            background: #64748b;
+        }
+
+        #cameraStatus {
+            margin-top: 8px;
+            color: #475569;
+            font-size: 14px;
+        }
+
+
+        /* First-time camera and location permission helper */
+        .permission-overlay {
+            position: fixed; inset: 0; z-index: 9999; display: none;
+            align-items: center; justify-content: center; padding: 18px;
+            background: rgba(15, 23, 42, .72);
+        }
+        .permission-dialog {
+            width: min(480px, 100%); background: #fff; border-radius: 18px;
+            padding: 26px; box-shadow: 0 20px 60px rgba(0,0,0,.3);
+            text-align: center;
+        }
+        .permission-dialog h2 { margin-bottom: 10px; }
+        .permission-dialog p { color: #475569; line-height: 1.55; margin-bottom: 18px; }
+        .permission-actions { display: grid; gap: 10px; }
+        .permission-actions button {
+            padding: 13px 16px; border: 0; border-radius: 9px;
+            font-weight: 700; background: #0f766e; color: white;
+        }
+        .permission-actions button.secondary { background: #e2e8f0; color: #1e293b; }
+        #permissionMessage { margin-top: 14px; font-size: 14px; }
+
+
+
+        /* Government-style sign-in and portal selection */
+        body {
+            background: linear-gradient(135deg, #eaf2f8 0%, #dce8f1 48%, #edf5f2 100%);
+            min-height: 100vh;
+        }
+        body.logged-out header,
+        body.logged-out nav,
+        body.logged-out .container,
+        body.logged-out footer { display: none !important; }
+        #loginScreen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background:
+                linear-gradient(120deg, rgba(7, 32, 64, .94), rgba(12, 82, 91, .88)),
+                radial-gradient(circle at top right, #d8a33c, transparent 35%);
+            position: relative;
+            overflow: hidden;
+        }
+        #loginScreen::before {
+            content: "";
+            position: absolute;
+            left: 0; right: 0; top: 0;
+            height: 7px;
+            background: linear-gradient(to right, #f59e0b 0 33.33%, #fff 33.33% 66.66%, #15803d 66.66% 100%);
+        }
+        .login-card {
+            width: 100%; max-width: 460px; position: relative; z-index: 1;
+            padding: 34px; border-radius: 20px; background: rgba(255,255,255,.97);
+            box-shadow: 0 22px 65px rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.5);
+        }
+        .login-emblem {
+            width: 72px; height: 72px; border-radius: 50%; margin: 0 auto 15px;
+            display: grid; place-items: center; color: white; font-size: 32px;
+            background: linear-gradient(145deg, #123b63, #0f766e); border: 4px solid #e6eef5;
+        }
+        .login-card h1 { text-align: center; color: #123052; font-size: 27px; margin-bottom: 7px; }
+        .login-card .login-subtitle { text-align: center; color: #64748b; margin-bottom: 24px; line-height: 1.5; }
+        .login-card label { display: block; text-align: left; color: #334155; font-weight: 700; margin: 12px 0 5px; }
+        .login-card input { margin: 0; }
+        .login-button, .portal-card button {
+            width: 100%; border: 0; border-radius: 9px; padding: 14px;
+            background: #123b63; color: white; font-weight: 700; font-size: 15px; margin-top: 16px;
+        }
+        .login-button:hover, .portal-card button:hover { background: #0f766e; }
+        .login-note { font-size: 12px; color: #64748b; line-height: 1.5; text-align: center; margin-top: 16px; }
+        #loginMessage { color: #b91c1c; font-size: 14px; margin-top: 10px; min-height: 18px; }
+        .portal-selection { border-top: 5px solid #0f766e; }
+        .portal-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 18px; }
+        .portal-card { border: 1px solid #dbe5ed; background: #f8fafc; border-radius: 14px; padding: 24px; text-align: center; }
+        .portal-card .portal-icon { font-size: 40px; margin-bottom: 12px; }
+        .portal-card h3 { color: #123b63; margin-bottom: 9px; }
+        .portal-card p { color: #64748b; line-height: 1.5; min-height: 45px; }
+        .portal-card button.emergency-choice { background: #b91c1c; }
+        .portal-card button.emergency-choice:hover { background: #991b1b; }
+        .portal-card button.non-emergency-choice { background: #0f766e; }
+        .flow-back { margin: 0 0 16px; border: 0; background: #e2e8f0; color: #1e293b; padding: 10px 14px; border-radius: 7px; font-weight: 700; }
+        .logout-button { background: #f8fafc !important; color: #123b63 !important; }
+        @media (max-width: 650px) {
+            .login-card { padding: 25px 20px; }
+            .portal-grid { grid-template-columns: 1fr; }
+        }
+
+    </style>
+
+</head>
+
+<body class="logged-out">
+
+
+    <!-- Sign-in page: shown before the CivicEvolve AI portal -->
+    <section id="loginScreen" aria-label="CivicEvolve AI sign in">
+        <div class="login-card">
+            <div class="login-emblem" aria-hidden="true">🏛️</div>
+            <h1>CivicEvolve AI</h1>
+            <p class="login-subtitle">Citizen Services & Public Issue Reporting<br>Secure portal sign in</p>
+            <form id="loginForm">
+                <label for="loginName">Full name</label>
+                <input id="loginName" type="text" placeholder="Enter your full name" autocomplete="name" required>
+                <label for="loginEmail">Email address</label>
+                <input id="loginEmail" type="email" placeholder="name@example.com" autocomplete="username" required>
+                <label for="loginPassword">Password</label>
+                <input id="loginPassword" type="password" placeholder="Enter password" autocomplete="current-password" minlength="4" required>
+                <button class="login-button" type="submit">Sign In</button>
+                <p id="loginMessage" role="status"></p>
+            </form>
+            <p class="login-note">Hackathon demo sign-in: this front-end sample accepts any valid email and a password of at least 4 characters. Real authentication requires a secure backend.</p>
+        </div>
+    </section>
+
+    <!-- HEADER -->
+
+    <header>
+
+        <h1>🌍 CivicEvolve AI</h1>
+
+        <p>
+            From Public Complaints to Government Action
+        </p>
+
+    </header>
+
+
+    <!-- NAVIGATION -->
+
+    <nav>
+
+        <button onclick="showPortalChoice()">
+
+            Public Portal
+
+        </button>
+
+        <button onclick="showSection('adminSection')">
+
+            Government Dashboard
+
+        </button>
+
+        <button class="logout-button" onclick="logoutUser()">Sign Out</button>
+
+    </nav>
+
+
+    <div class="container">
+
+
+        <!-- Post-login service selection page -->
+        <section id="portalChoice" class="card portal-selection hidden">
+            <h2>Welcome to CivicEvolve AI</h2>
+            <p style="margin-bottom:20px;">Choose the type of issue you want to report. Emergency reports are for immediate danger; non-emergency reports are for civic issues that do not require urgent response.</p>
+            <div class="portal-grid">
+                <div class="portal-card">
+                    <div class="portal-icon" aria-hidden="true">🚨</div>
+                    <h3>Emergency</h3>
+                    <p>Report urgent situations such as fire, accidents, flooding, or immediate danger.</p>
+                    <button class="emergency-choice" type="button" onclick="openReportingType('emergency')">Report Emergency</button>
+                </div>
+                <div class="portal-card">
+                    <div class="portal-icon" aria-hidden="true">🏙️</div>
+                    <h3>Non-Emergency</h3>
+                    <p>Report civic concerns such as damaged roads, garbage, streetlights, or drainage issues.</p>
+                    <button class="non-emergency-choice" type="button" onclick="openReportingType('nonEmergency')">Report Civic Issue</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Non-emergency reporting page -->
+        <section id="nonEmergencySection" class="hidden">
+            <button type="button" class="flow-back" onclick="showPortalChoice()">← Back to issue selection</button>
+            <div class="card">
+                <h2>🏙️ Report a Non-Emergency Civic Issue</h2>
+                <p style="margin-bottom:15px;">Use this form for issues that do not require an immediate emergency response.</p>
+                <form id="nonEmergencyForm">
+                    <input type="text" id="nonEmergencyName" placeholder="Your Name" required>
+                    <input type="email" id="nonEmergencyEmail" placeholder="Your Email" required>
+                    <select id="nonEmergencyType" required>
+                        <option value="">Select Civic Issue</option>
+                        <option value="Road Damage">Road Damage / Pothole</option>
+                        <option value="Garbage">Garbage / Waste Collection</option>
+                        <option value="Streetlight">Streetlight Not Working</option>
+                        <option value="Drainage">Drainage / Water Leakage</option>
+                        <option value="Water Supply">Water Supply</option>
+                        <option value="Other Civic Issue">Other Civic Issue</option>
+                    </select>
+                    <input type="text" id="nonEmergencyLocation" placeholder="Issue Location / Address" required>
+                    <textarea id="nonEmergencyDescription" rows="4" placeholder="Describe the civic issue" required></textarea>
+                    <h3>📷 Attach Photo (optional)</h3>
+                    <input type="file" id="nonEmergencyPhoto" accept="image/*">
+                    <button type="button" class="location-btn" id="nonEmergencyLocate">📍 Detect My Location</button>
+                    <p id="nonEmergencyLocationStatus">Location not detected (you can enter the address manually).</p>
+                    <input type="hidden" id="nonEmergencyLatitude">
+                    <input type="hidden" id="nonEmergencyLongitude">
+                    <button type="submit" class="submit-btn">Submit Civic Issue</button>
+                </form>
+                <p id="nonEmergencyMessage" role="status" style="margin-top:12px;"></p>
+            </div>
+        </section>
+
+
+        <!-- PUBLIC USER SECTION -->
+
+        <section id="userSection" class="hidden">
+
+
+            <!-- REPORT FORM -->
+
+            <div class="card">
+
+                <h2>🚨 Report an Emergency</h2>
+
+                <form id="reportForm">
+
+                    <input
+                        type="text"
+                        id="name"
+                        placeholder="Your Name"
+                        required
+                    >
+
+                    <input
+                        type="email"
+                        id="email"
+                        placeholder="Your Email"
+                        required
+                    >
+
+                    <select id="emergencyType" required>
+
+                        <option value="">
+                            Select Emergency Type
+                        </option>
+
+                        <option value="Flood">
+                            Flood
+                        </option>
+
+                        <option value="Road Damage">
+                            Road Damage
+                        </option>
+
+                        <option value="Fire">
+                            Fire
+                        </option>
+
+                        <option value="Accident">
+                            Accident
+                        </option>
+
+                        <option value="Other">
+                            Other
+                        </option>
+
+                    </select>
+
+
+                    <input
+                        type="text"
+                        id="location"
+                        placeholder="Incident Location / Address"
+                        required
+                    >
+
+
+                    <textarea
+                        id="description"
+                        placeholder="Describe the emergency"
+                        rows="4"
+                        required
+                    ></textarea>
+
+
+                    <!-- GPS LOCATION -->
+
+                    <h3>📍 Current Location</h3>
+
+                    <button
+                        type="button"
+                        class="location-btn"
+                        onclick="getCurrentLocation()"
+                    >
+
+                        Detect My Current Location
+
+                    </button>
+
+                    <p id="locationStatus">
+
+                        Location not detected
+
+                    </p>
+
+                    <div id="map"></div>
+
+                    <input
+                        type="hidden"
+                        id="latitude"
+                    >
+
+                    <input
+                        type="hidden"
+                        id="longitude"
+                    >
+
+
+                    <!-- IMAGE UPLOAD -->
+
+                    <h3>📷 Upload Emergency Photo</h3>
+
+                    <input
+                        type="file"
+                        id="photo"
+                        accept="image/*"
+                        required
+                    >
+
+                    <!-- Camera preview and photo capture -->
+                    <div class="camera-box">
+                        <h3>📸 Take a Photo Using Camera</h3>
+                        <video id="cameraPreview" autoplay playsinline></video>
+                        <img id="capturedPreview" alt="Captured emergency photo preview">
+                        <canvas id="cameraCanvas" class="hidden"></canvas>
+                        <div class="camera-actions">
+                            <button type="button" id="startCamera">Open Camera</button>
+                            <button type="button" id="capturePhoto">Capture Photo</button>
+                            <button type="button" id="stopCamera" class="stop-camera">Stop Camera</button>
+                        </div>
+                        <p id="cameraStatus">You can upload a photo above or take one using your camera.</p>
+                        <p id="photoLocationStatus" class="status">Photo GPS location has not been captured yet.</p>
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="submit-btn"
+                    >
+
+                        Submit Emergency Report
+
+                    </button>
+
+                </form>
+
+            </div>
+
+
+            <!-- USER REPORTS -->
+
+            <div class="card">
+
+                <h2>My Emergency Reports</h2>
+
+                <div id="myReports">
+
+                    No reports submitted yet.
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- GOVERNMENT ADMIN SECTION -->
+
+        <section id="adminSection" class="hidden">
+
+
+            <!-- STATISTICS -->
+
+            <div class="card">
+
+                <h2>Government Admin Dashboard</h2>
+
+                <div class="stats">
+
+                    <div class="stat-box">
+
+                        <h3 id="totalReports">0</h3>
+
+                        <p>Total Reports</p>
+
+                    </div>
+
+                    <div class="stat-box">
+
+                        <h3 id="activeReports">0</h3>
+
+                        <p>Active Emergencies</p>
+
+                    </div>
+
+                    <div class="stat-box">
+
+                        <h3 id="resolvedReports">0</h3>
+
+                        <p>Resolved Emergencies</p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ADMIN MAP -->
+
+            <div class="card">
+
+                <h2>🗺️ Emergency Locations</h2>
+
+                <div id="adminMap"></div>
+
+            </div>
+
+
+            <!-- ADMIN REPORTS -->
+
+            <div class="card">
+
+                <h2>📋 Reports Overview</h2>
+                <div class="admin-report-columns">
+                    <div class="admin-report-column emergency-column">
+                        <h3>🚨 Emergency Alerts</h3>
+                        <div id="adminEmergencyReports">No emergency alerts available.</div>
+                    </div>
+                    <div class="admin-report-column civic-column">
+                        <h3>🏙️ Non-Emergency Civic Issues</h3>
+                        <div id="adminCivicReports">No civic issues available.</div>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+    </div>
+
+
+    <!-- FOOTER -->
+
+    <footer>
+
+        <p>
+            CivicEvolve AI | Smart Emergency Reporting System
+        </p>
+
+    </footer>
+
+
+
+
+    <!-- First-time permission prompt. Browser permission is still confirmed by the user. -->
+    <div id="permissionOverlay" class="permission-overlay" role="dialog" aria-modal="true" aria-labelledby="permissionTitle">
+        <div class="permission-dialog">
+            <h2 id="permissionTitle">📍📷 Make reporting easier</h2>
+            <p>Allow CivicEvolve AI to use your location to show where an emergency happened, and your camera to take an evidence photo. Your browser will ask you to confirm each permission.</p>
+            <div class="permission-actions">
+                <button type="button" id="allowLocationFromPopup">📍 Allow Location</button>
+                <button type="button" id="allowCameraFromPopup">📷 Allow Camera</button>
+                <button type="button" class="secondary" id="closePermissionPopup">Continue without now</button>
+            </div>
+            <p id="permissionMessage" aria-live="polite"></p>
+        </div>
+    </div>
+
+    <script>
+
+
+
+        // Show a friendly permission explanation on first visit.
+        // The browser's native Allow/Deny prompt can only be triggered after a user click.
+        const permissionOverlay = document.getElementById("permissionOverlay");
+        const permissionMessage = document.getElementById("permissionMessage");
+        // Permission introduction is shown after a user signs in, not over the login screen.
+        function showPermissionIntroIfNeeded() {
+            if (!localStorage.getItem("civicPermissionIntroSeen")) {
+                permissionOverlay.style.display = "flex";
+            }
+        }
+
+        document.getElementById("closePermissionPopup").addEventListener("click", function () {
+            permissionOverlay.style.display = "none";
+            localStorage.setItem("civicPermissionIntroSeen", "yes");
+        });
+
+        // Request location after the user clicks. Hide the intro so it cannot cover the page.
+        document.getElementById("allowLocationFromPopup").addEventListener("click", function () {
+            permissionOverlay.style.display = "none";
+            localStorage.setItem("civicPermissionIntroSeen", "yes");
+            getCurrentLocation();
+        });
+
+        // Request camera after the user clicks. Hide the intro before opening the preview.
+        document.getElementById("allowCameraFromPopup").addEventListener("click", function () {
+            permissionOverlay.style.display = "none";
+            localStorage.setItem("civicPermissionIntroSeen", "yes");
+            document.getElementById("startCamera").click();
+        });
+
+        // ====================================
+        // BACKEND CONFIGURATION
+        // ====================================
+
+        const API_URL = "http://127.0.0.1:5000/api/reports";
+
+
+        // ====================================
+        // GLOBAL VARIABLES
+        // ====================================
+
+        let latitude = null;
+
+        let longitude = null;
+
+        let reports = [];
+
+        let userMap = null;
+
+        let adminMap = null;
+
+        let userMarker = null;
+
+        let adminMarkers = [];
+
+        // Camera state and captured image
+        let cameraStream = null;
+        let capturedPhoto = null;
+        // GPS details recorded at the moment the camera photo is captured
+        let capturedPhotoLatitude = null;
+        let capturedPhotoLongitude = null;
+        let capturedPhotoTakenAt = null;
+
+
+
+        // ====================================
+        // CAMERA PREVIEW AND PHOTO CAPTURE
+        // ====================================
+
+        const cameraPreview = document.getElementById("cameraPreview");
+        const cameraCanvas = document.getElementById("cameraCanvas");
+        const capturedPreview = document.getElementById("capturedPreview");
+        const cameraStatus = document.getElementById("cameraStatus");
+
+        // Open the device camera (rear camera on supported phones)
+        document.getElementById("startCamera").addEventListener("click", async function() {
+            try {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error("Camera access is not supported by this browser.");
+                }
+
+                // Close any camera stream that is already running
+                stopCamera();
+
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { ideal: "environment" } },
+                    audio: false
+                });
+
+                cameraPreview.srcObject = cameraStream;
+                cameraPreview.style.display = "block";
+                cameraStatus.textContent = "Camera is ready. Capture a photo when you are ready.";
+            } catch (error) {
+                cameraStatus.textContent = "Could not open camera. Allow camera permission and use localhost or HTTPS.";
+                console.error("Camera error:", error);
+            }
+        });
+
+        // Capture a still image and record GPS at capture time
+        document.getElementById("capturePhoto").addEventListener("click", async function() {
+            if (!cameraStream || !cameraPreview.videoWidth) {
+                alert("Please open the camera first and wait for the preview.");
+                return;
+            }
+
+            const captureButton = document.getElementById("capturePhoto");
+            const photoLocationStatus = document.getElementById("photoLocationStatus");
+            captureButton.disabled = true;
+            cameraStatus.textContent = "Capturing photo and detecting its GPS location...";
+            photoLocationStatus.textContent = "Getting GPS coordinates for this photo...";
+
+            // Capture the current frame from the live camera feed
+            cameraCanvas.width = cameraPreview.videoWidth;
+            cameraCanvas.height = cameraPreview.videoHeight;
+            const context = cameraCanvas.getContext("2d");
+            context.drawImage(cameraPreview, 0, 0, cameraCanvas.width, cameraCanvas.height);
+
+            cameraCanvas.toBlob(async function(blob) {
+                if (!blob) {
+                    cameraStatus.textContent = "Photo capture failed. Please try again.";
+                    captureButton.disabled = false;
+                    return;
+                }
+
+                // Keep the image available for the report form
+                capturedPhoto = new File([blob], "emergency-photo.jpg", { type: "image/jpeg" });
+                capturedPreview.src = URL.createObjectURL(blob);
+                capturedPreview.style.display = "block";
+                capturedPhotoTakenAt = new Date().toISOString();
+
+                // Obtain GPS coordinates close to the moment the photo was taken
+                if (!navigator.geolocation) {
+                    photoLocationStatus.textContent = "GPS is not supported by this browser. Use Detect My Current Location before submitting.";
+                    cameraStatus.textContent = "Photo captured, but its GPS location could not be recorded.";
+                    captureButton.disabled = false;
+                    return;
+                }
+
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        capturedPhotoLatitude = position.coords.latitude;
+                        capturedPhotoLongitude = position.coords.longitude;
+
+                        // Use the photo's GPS location for this emergency report
+                        latitude = capturedPhotoLatitude;
+                        longitude = capturedPhotoLongitude;
+                        document.getElementById("latitude").value = latitude;
+                        document.getElementById("longitude").value = longitude;
+                        document.getElementById("location").value = latitude.toFixed(6) + ", " + longitude.toFixed(6);
+
+                        // Update the existing location map and marker, if available
+                        initializeUserMap();
+                        userMap.setView([latitude, longitude], 16);
+                        if (userMarker) {
+                            userMap.removeLayer(userMarker);
+                        }
+                        userMarker = L.marker([latitude, longitude]).addTo(userMap);
+                        userMarker.bindPopup("GPS location where photo was captured").openPopup();
+
+                        document.getElementById("locationStatus").textContent = "Photo capture location detected.";
+                        photoLocationStatus.textContent = "Photo GPS: " + latitude.toFixed(6) + ", " + longitude.toFixed(6) + " | Captured: " + new Date(capturedPhotoTakenAt).toLocaleString();
+                        cameraStatus.textContent = "Photo captured with GPS location. It will be attached to your report.";
+                        captureButton.disabled = false;
+                    },
+                    function(error) {
+                        capturedPhotoLatitude = null;
+                        capturedPhotoLongitude = null;
+                        // Do not reuse an old location as the new photo's GPS
+                        latitude = null;
+                        longitude = null;
+                        document.getElementById("latitude").value = "";
+                        document.getElementById("longitude").value = "";
+                        photoLocationStatus.textContent = "Could not get GPS for this photo. Please click Detect My Current Location before submitting.";
+                        cameraStatus.textContent = "Photo captured, but GPS permission/location failed.";
+                        captureButton.disabled = false;
+                    },
+                    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+                );
+            }, "image/jpeg", 0.9);
+        });
+
+        // Stop camera and release the device
+        function stopCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(function(track) {
+                    track.stop();
+                });
+                cameraStream = null;
+            }
+
+            cameraPreview.srcObject = null;
+            cameraPreview.style.display = "none";
+        }
+
+        document.getElementById("stopCamera").addEventListener("click", function() {
+            stopCamera();
+            cameraStatus.textContent = "Camera stopped.";
+        });
+
+        // ====================================
+        // SHOW USER OR ADMIN SECTION
+        // ====================================
+
+        function showSection(sectionId) {
+
+            document.getElementById("userSection")
+                .classList.add("hidden");
+
+            document.getElementById("adminSection")
+                .classList.add("hidden");
+
+
+            document.getElementById(sectionId)
+                .classList.remove("hidden");
+
+            // Hide the citizen service selector and non-emergency form when switching to dashboard sections.
+            const portalChoiceElement = document.getElementById("portalChoice");
+            const nonEmergencyElement = document.getElementById("nonEmergencySection");
+            if (portalChoiceElement) portalChoiceElement.classList.add("hidden");
+            if (nonEmergencyElement) nonEmergencyElement.classList.add("hidden");
+
+            // Initialize maps when their section becomes visible
+
+            setTimeout(function() {
+
+                if (sectionId === "userSection") {
+
+                    initializeUserMap();
+
+                    if (userMap) {
+
+                        userMap.invalidateSize();
+
+                    }
+
+                }
+
+                if (sectionId === "adminSection") {
+
+                    initializeAdminMap();
+
+                    if (adminMap) {
+
+                        adminMap.invalidateSize();
+
+                    }
+
+                    loadReports();
+
+                }
+
+            }, 200);
+
+        }
+
+
+
+        // ====================================
+        // INITIALIZE USER MAP
+        // ====================================
+
+        function initializeUserMap() {
+
+            if (userMap) {
+
+                return;
+
+            }
+
+            // Default map location: Belagavi
+            // User's actual location will replace this after GPS detection
+
+            userMap = L.map("map")
+                .setView([15.8497, 74.4977], 12);
+
+
+            L.tileLayer(
+                "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+                    attribution: "&copy; OpenStreetMap contributors"
+                }
+            ).addTo(userMap);
+
+        }
+
+
+
+        // ====================================
+        // INITIALIZE ADMIN MAP
+        // ====================================
+
+        function initializeAdminMap() {
+
+            if (adminMap) {
+
+                return;
+
+            }
+
+            adminMap = L.map("adminMap")
+                .setView([15.8497, 74.4977], 12);
+
+
+            L.tileLayer(
+                "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+                    attribution: "&copy; OpenStreetMap contributors"
+                }
+            ).addTo(adminMap);
+
+        }
+
+
+
+        // ====================================
+        // DETECT CURRENT GPS LOCATION
+        // ====================================
+
+        function getCurrentLocation() {
+
+            initializeUserMap();
+
+            const status =
+                document.getElementById("locationStatus");
+
+
+            status.textContent = "Detecting location...";
+
+
+            if (!navigator.geolocation) {
+
+                status.textContent =
+                    "Your browser does not support GPS location.";
+
+                return;
+
+            }
+
+
+            navigator.geolocation.getCurrentPosition(
+
+                function(position) {
+
+                    latitude =
+                        position.coords.latitude;
+
+                    longitude =
+                        position.coords.longitude;
+
+
+                    document.getElementById("latitude").value =
+                        latitude;
+
+                    document.getElementById("longitude").value =
+                        longitude;
+
+
+                    // Move map to current location
+
+                    userMap.setView(
+                        [latitude, longitude],
+                        16
+                    );
+
+
+                    // Remove previous marker
+
+                    if (userMarker) {
+
+                        userMap.removeLayer(userMarker);
+
+                    }
+
+
+                    // Create new location marker
+
+                    userMarker = L.marker(
+                        [latitude, longitude]
+                    )
+                    .addTo(userMap);
+
+
+                    userMarker.bindPopup(
+                        "Your Current Location"
+                    ).openPopup();
+
+
+                    status.textContent =
+                        "Location detected successfully!";
+
+
+                    // Automatically populate location field
+
+                    document.getElementById("location").value =
+                        latitude.toFixed(6) +
+                        ", " +
+                        longitude.toFixed(6);
+
+                },
+
+
+                function(error) {
+
+                    status.textContent =
+                        "Location unavailable. Please allow location access.";
+
+                },
+
+
+                {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 0
+                }
+
+            );
+
+        }
+
+
+
+        // ====================================
+        // SUBMIT EMERGENCY REPORT
+        // ====================================
+
+        document.getElementById("reportForm")
+            .addEventListener("submit", async function(event) {
+
+                event.preventDefault();
+
+
+                if (latitude === null || longitude === null) {
+
+                    alert(
+                        "Please detect your current location before submitting."
+                    );
+
+                    return;
+
+                }
+
+
+                const name =
+                    document.getElementById("name").value;
+
+                const email =
+                    document.getElementById("email").value;
+
+                const type =
+                    document.getElementById("emergencyType").value;
+
+                const location =
+                    document.getElementById("location").value;
+
+                const description =
+                    document.getElementById("description").value;
+
+                // Use camera photo if captured; otherwise use uploaded photo
+                const uploadedPhoto = document.getElementById("photo").files[0];
+                const photo = capturedPhoto || uploadedPhoto;
+
+
+                if (!photo) {
+
+                    alert("Please upload an emergency photo.");
+
+                    return;
+
+                }
+
+
+                // Prepare form data
+
+                const formData = new FormData();
+
+
+                formData.append("name", name);
+
+                formData.append("email", email);
+
+                formData.append("emergency_type", type);
+
+                formData.append("location", location);
+
+                formData.append("description", description);
+
+                formData.append("image", photo);
+
+                formData.append("latitude", latitude);
+
+                formData.append("longitude", longitude);
+
+                // Optional metadata: GPS and timestamp associated with camera capture
+                if (capturedPhoto) {
+                    formData.append("photo_latitude", capturedPhotoLatitude ?? latitude);
+                    formData.append("photo_longitude", capturedPhotoLongitude ?? longitude);
+                    formData.append("photo_taken_at", capturedPhotoTakenAt || "");
+                }
+
+
+                try {
+
+                    const response = await fetch(
+                        API_URL,
+                        {
+                            method: "POST",
+                            body: formData
+                        }
+                    );
+
+
+                    const data = await response.json();
+
+
+                    if (!response.ok) {
+
+                        throw new Error(
+                            data.error || "Report submission failed"
+                        );
+
+                    }
+
+
+                    alert(
+                        "Emergency report submitted successfully!"
+                    );
+
+
+                    document.getElementById("reportForm").reset();
+
+                    // Clear captured image preview and stop camera after submission
+                    capturedPhoto = null;
+                    capturedPhotoLatitude = null;
+                    capturedPhotoLongitude = null;
+                    capturedPhotoTakenAt = null;
+                    capturedPreview.removeAttribute("src");
+                    capturedPreview.style.display = "none";
+                    document.getElementById("photoLocationStatus").textContent = "Photo GPS location has not been captured yet.";
+                    stopCamera();
+                    cameraStatus.textContent = "You can upload a photo above or take one using your camera.";
+
+
+                    // Reset location variables
+
+                    latitude = null;
+
+                    longitude = null;
+
+                    userMarker = null;
+
+
+                    document.getElementById("locationStatus")
+                        .textContent = "Location not detected";
+
+
+                    // Refresh reports
+
+                    await loadReports();
+
+                }
+
+                catch(error) {
+
+                    alert(
+                        "Error: " + error.message
+                    );
+
+                }
+
+            });
+
+
+
+        // ====================================
+        // LOAD REPORTS FROM FLASK BACKEND
+        // ====================================
+
+        async function loadReports() {
+
+            try {
+
+                const response = await fetch(API_URL);
+
+
+                if (!response.ok) {
+
+                    throw new Error("Unable to load reports");
+
+                }
+
+
+                reports = await response.json();
+
+
+                displayReports();
+
+
+            }
+
+            catch(error) {
+
+                console.error(error);
+
+            }
+
+        }
+
+
+
+        // ====================================
+        // DISPLAY REPORTS
+        // ====================================
+
+        function displayReports() {
+            const myReports = document.getElementById("myReports");
+            const emergencyContainer = document.getElementById("adminEmergencyReports");
+            const civicContainer = document.getElementById("adminCivicReports");
+            myReports.innerHTML = "";
+            emergencyContainer.innerHTML = "";
+            civicContainer.innerHTML = "";
+
+            if (!reports || reports.length === 0) {
+                myReports.textContent = "No reports submitted yet.";
+                emergencyContainer.textContent = "No emergency alerts available.";
+                civicContainer.textContent = "No civic issues available.";
+            }
+
+            reports.forEach(function(report) {
+                const issueType = String(report.emergency_type || report.issue_type || "Civic issue");
+                const isNonEmergency = issueType.toLowerCase().startsWith("non-emergency:") ||
+                    String(report.report_type || "").toLowerCase() === "non-emergency";
+
+                // Citizen's report card
+                const userCard = document.createElement("div");
+                userCard.className = "report";
+                const userTitle = document.createElement("h3");
+                userTitle.textContent = issueType;
+                const userLocation = document.createElement("p");
+                userLocation.textContent = "Location: " + (report.location || "Not provided");
+                const userStatus = document.createElement("p");
+                userStatus.className = "status";
+                userStatus.textContent = "Status: " + (report.status || "Report Received");
+                userCard.append(userTitle, userLocation, userStatus);
+                if (report.image_url) {
+                    const image = document.createElement("img");
+                    image.src = report.image_url;
+                    image.alt = "Uploaded report image";
+                    userCard.appendChild(image);
+                }
+                myReports.appendChild(userCard);
+
+                // Government portal card, routed into the correct column
+                const adminCard = document.createElement("div");
+                adminCard.className = "report";
+                if (!isNonEmergency) {
+                    const badge = document.createElement("div");
+                    badge.className = "urgent-badge";
+                    badge.textContent = "⚠️ URGENT EMERGENCY";
+                    adminCard.appendChild(badge);
+                }
+                const adminTitle = document.createElement("h3");
+                adminTitle.textContent = issueType.replace(/^Non-Emergency:\s*/i, "");
+                const adminLocation = document.createElement("p");
+                adminLocation.textContent = "Location: " + (report.location || "Not provided");
+                const adminDescription = document.createElement("p");
+                adminDescription.textContent = "Description: " + (report.description || "No description provided");
+                const adminStatus = document.createElement("p");
+                adminStatus.className = "status";
+                adminStatus.textContent = "Status: " + (report.status || "Report Received");
+                adminCard.append(adminTitle, adminLocation, adminDescription, adminStatus);
+                if (report.image_url) {
+                    const image = document.createElement("img");
+                    image.src = report.image_url;
+                    image.alt = "Uploaded report image";
+                    adminCard.appendChild(image);
+                }
+
+                const statusSelect = document.createElement("select");
+                ["Report Received", "Under Review", "Action Taken", "Resolved"].forEach(function(status) {
+                    const option = document.createElement("option");
+                    option.value = status;
+                    option.textContent = status;
+                    if ((report.status || "Report Received") === status) option.selected = true;
+                    statusSelect.appendChild(option);
+                });
+                statusSelect.addEventListener("change", async function() {
+                    await updateReportStatus(report.id, statusSelect.value);
+                });
+                adminCard.appendChild(statusSelect);
+                (isNonEmergency ? civicContainer : emergencyContainer).appendChild(adminCard);
+            });
+
+            document.getElementById("totalReports").textContent = reports.length;
+            document.getElementById("activeReports").textContent = reports.filter(function(report) {
+                return report.status !== "Resolved";
+            }).length;
+            document.getElementById("resolvedReports").textContent = reports.filter(function(report) {
+                return report.status === "Resolved";
+            }).length;
+            displayAdminMapMarkers();
+        }
+
+
+        // ====================================
+        // UPDATE EMERGENCY STATUS
+        // ====================================
+
+        async function updateReportStatus(
+            reportId,
+            status
+        ) {
+
+            try {
+
+                const response = await fetch(
+
+                    API_URL + "/" + reportId,
+
+                    {
+
+                        method: "PUT",
+
+                        headers: {
+
+                            "Content-Type": "application/json"
+
+                        },
+
+                        body: JSON.stringify({
+
+                            status: status
+
+                        })
+
+                    }
+
+                );
+
+
+                const data = await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.error || "Status update failed"
+                    );
+
+                }
+
+
+                alert("Status updated successfully!");
+
+
+                await loadReports();
+
+            }
+
+            catch(error) {
+
+                alert(error.message);
+
+            }
+
+        }
+
+
+
+        // ====================================
+        // DISPLAY EMERGENCY LOCATIONS ON ADMIN MAP
+        // ====================================
+
+        function displayAdminMapMarkers() {
+
+            if (!adminMap) {
+
+                return;
+
+            }
+
+
+            // Remove previous markers
+
+            adminMarkers.forEach(function(marker) {
+
+                adminMap.removeLayer(marker);
+
+            });
+
+
+            adminMarkers = [];
+
+
+            reports.forEach(function(report) {
+
+                if (
+                    report.latitude !== null &&
+                    report.longitude !== null &&
+                    report.latitude !== undefined &&
+                    report.longitude !== undefined
+                ) {
+
+
+                    const marker = L.marker([
+
+                        report.latitude,
+
+                        report.longitude
+
+                    ]).addTo(adminMap);
+
+
+                    marker.bindPopup(
+
+                        "<b>" +
+                        report.emergency_type +
+                        "</b><br>" +
+
+                        "Location: " +
+                        report.location +
+                        "<br>" +
+
+                        "Status: " +
+                        report.status
+
+                    );
+
+
+                    adminMarkers.push(marker);
+
+                }
+
+            });
+
+
+            // Automatically zoom to reported emergencies
+
+            if (adminMarkers.length > 0) {
+
+                const group =
+                    L.featureGroup(adminMarkers);
+
+
+                adminMap.fitBounds(
+                    group.getBounds(),
+                    {
+                        padding: [30, 30],
+                        maxZoom: 15
+                    }
+                );
+
+            }
+
+        }
+
+
+
+        // ====================================
+        // INITIALIZE WEBSITE
+        // ====================================
+
+        window.onload = function() {
+
+            initializeUserMap();
+
+            loadReports();
+
+        };
+
+
+    </script>
+
+
+
+    <script>
+        // ==========================================
+        // DEMO SIGN-IN + EMERGENCY / NON-EMERGENCY FLOW
+        // ==========================================
+        const loginScreen = document.getElementById("loginScreen");
+        const loginForm = document.getElementById("loginForm");
+        const loginMessage = document.getElementById("loginMessage");
+        const portalChoice = document.getElementById("portalChoice");
+        const nonEmergencySection = document.getElementById("nonEmergencySection");
+
+        function showPortalChoice() {
+            portalChoice.classList.remove("hidden");
+            document.getElementById("userSection").classList.add("hidden");
+            document.getElementById("adminSection").classList.add("hidden");
+            nonEmergencySection.classList.add("hidden");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        function openReportingType(type) {
+            portalChoice.classList.add("hidden");
+            document.getElementById("adminSection").classList.add("hidden");
+            if (type === "emergency") {
+                document.getElementById("userSection").classList.remove("hidden");
+                nonEmergencySection.classList.add("hidden");
+                setTimeout(() => {
+                    initializeUserMap();
+                    if (userMap) userMap.invalidateSize();
+                }, 250);
+            } else {
+                document.getElementById("userSection").classList.add("hidden");
+                nonEmergencySection.classList.remove("hidden");
+                setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 50);
+            }
+        }
+
+        function enterPortal(user) {
+            // Demo session only. Do not treat localStorage as secure authentication.
+            localStorage.setItem("civicDemoUser", JSON.stringify(user));
+            document.body.classList.remove("logged-out");
+            loginScreen.style.display = "none";
+            document.getElementById("userSection").classList.add("hidden");
+            document.getElementById("adminSection").classList.add("hidden");
+            nonEmergencySection.classList.add("hidden");
+            showPortalChoice();
+            // Prefill the reporter details in both forms after sign in.
+            document.getElementById("name").value = user.name || "";
+            document.getElementById("email").value = user.email || "";
+            document.getElementById("nonEmergencyName").value = user.name || "";
+            document.getElementById("nonEmergencyEmail").value = user.email || "";
+            if (typeof showPermissionIntroIfNeeded === "function") {
+                showPermissionIntroIfNeeded();
+            }
+        }
+
+        loginForm.addEventListener("submit", function (event) {
+            event.preventDefault();
+            const name = document.getElementById("loginName").value.trim();
+            const email = document.getElementById("loginEmail").value.trim();
+            const password = document.getElementById("loginPassword").value;
+            if (!name || !email || password.length < 4) {
+                loginMessage.textContent = "Enter your name, a valid email, and a password of at least 4 characters.";
+                return;
+            }
+            loginMessage.textContent = "";
+            enterPortal({ name, email });
+        });
+
+        function logoutUser() {
+            localStorage.removeItem("civicDemoUser");
+            document.body.classList.add("logged-out");
+            loginScreen.style.display = "flex";
+            portalChoice.classList.add("hidden");
+            document.getElementById("userSection").classList.add("hidden");
+            document.getElementById("adminSection").classList.add("hidden");
+            nonEmergencySection.classList.add("hidden");
+            document.getElementById("loginPassword").value = "";
+            permissionOverlay.style.display = "none";
+        }
+
+        // Restore a demo session if the user refreshed the page.
+        const savedDemoUser = localStorage.getItem("civicDemoUser");
+        if (savedDemoUser) {
+            try {
+                enterPortal(JSON.parse(savedDemoUser));
+            } catch (error) {
+                localStorage.removeItem("civicDemoUser");
+            }
+        }
+
+        // Non-emergency location button. Address remains editable/manual.
+        document.getElementById("nonEmergencyLocate").addEventListener("click", function () {
+            const status = document.getElementById("nonEmergencyLocationStatus");
+            status.textContent = "Getting your location...";
+            if (!navigator.geolocation) {
+                status.textContent = "Geolocation is not supported. Please enter the address manually.";
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(function (position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                document.getElementById("nonEmergencyLatitude").value = lat;
+                document.getElementById("nonEmergencyLongitude").value = lng;
+                document.getElementById("nonEmergencyLocation").value = lat.toFixed(6) + ", " + lng.toFixed(6);
+                status.textContent = "Location detected.";
+            }, function (error) {
+                console.error(error);
+                status.textContent = "Location permission unavailable. Please enter the address manually.";
+            }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+        });
+
+        // Submit a non-emergency issue to the same configured backend API.
+        document.getElementById("nonEmergencyForm").addEventListener("submit", async function (event) {
+            event.preventDefault();
+            const formData = new FormData();
+            formData.append("name", document.getElementById("nonEmergencyName").value.trim());
+            formData.append("email", document.getElementById("nonEmergencyEmail").value.trim());
+            formData.append("emergency_type", "Non-Emergency: " + document.getElementById("nonEmergencyType").value);
+            formData.append("location", document.getElementById("nonEmergencyLocation").value.trim());
+            formData.append("description", document.getElementById("nonEmergencyDescription").value.trim());
+            const photo = document.getElementById("nonEmergencyPhoto").files[0];
+            if (photo) formData.append("image", photo);
+            const lat = document.getElementById("nonEmergencyLatitude").value;
+            const lng = document.getElementById("nonEmergencyLongitude").value;
+            if (lat) formData.append("latitude", lat);
+            if (lng) formData.append("longitude", lng);
+            const message = document.getElementById("nonEmergencyMessage");
+            message.textContent = "Submitting civic issue...";
+            try {
+                const response = await fetch(API_URL, { method: "POST", body: formData });
+                let data = {};
+                try { data = await response.json(); } catch (_) {}
+                if (!response.ok) throw new Error(data.error || "Submission failed. Check the backend connection.");
+                message.textContent = "Civic issue submitted successfully.";
+                document.getElementById("nonEmergencyForm").reset();
+                document.getElementById("nonEmergencyName").value = JSON.parse(localStorage.getItem("civicDemoUser") || "{}").name || "";
+                document.getElementById("nonEmergencyEmail").value = JSON.parse(localStorage.getItem("civicDemoUser") || "{}").email || "";
+                document.getElementById("nonEmergencyLocationStatus").textContent = "Location not detected (you can enter the address manually).";
+                await loadReports();
+            } catch (error) {
+                console.error(error);
+                message.textContent = "Could not submit: " + error.message;
+            }
+        });
+    </script>
+
+</body>
+
+</html>
